@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import sys
 import os
 
@@ -7,8 +9,6 @@ from sagemaker.sklearn.model import SKLearnModel
 from sagemaker.sklearn.processing import SKLearnProcessor
 from sagemaker.sklearn.estimator import SKLearn
 from sagemaker.processing import ProcessingInput, ProcessingOutput
-
-sys.path.append('modules')
 
 # start session
 sagemaker_session = sagemaker.Session()
@@ -40,16 +40,14 @@ sklearn_processor.run(code='modules/preprocessing.py',
                     arguments=['--inference', 'true'])
 
 preprocessing_job_description = sklearn_processor.jobs[-1].describe() 
-processed_data = os.path.join('s3://', bucket, preprocessing_job_description['ProcessingJobName'], 'output', 'processed_data', 'data.csv')     
-
-# processed_data = os.path.join('s3://', bucket, 'sagemaker-scikit-learn-2021-11-23-22-02-37-569', 'output', 'processed_data', 'data.csv')   
+processed_data = os.path.join('s3://', bucket, preprocessing_job_description['ProcessingJobName'], 'output', 'processed_data', 'data.csv')
 
 # load training job name
 with open ("training_job_name.txt", "r") as job:
     job_name = job.read().splitlines()[0]
 
 # load model for inference
-model_artifact = os.path.join('s3://', bucket, job_name, 'output', 'model.tar.gz')
+model_artifact = os.path.join('s3://', bucket, job_name, 'output', 'model.tar.gz') # fancy name for pickle
 
 model = SKLearnModel(model_data=model_artifact,
                      role=role,
@@ -57,7 +55,11 @@ model = SKLearnModel(model_data=model_artifact,
                      entry_point='modules/model.py')
 
 transformer = model.transformer(
-    instance_count=1, instance_type="ml.m4.xlarge", assemble_with="Line", accept="text/csv")                          
+    instance_count=1, 
+    instance_type="ml.m4.xlarge", 
+    assemble_with="Line", 
+    accept="text/csv", 
+    output_path=os.path.join(output_path, 'data.csv.out'))                          
 
 prediction = transformer.transform(data=processed_data, content_type='text/csv')
 print(processed_data)

@@ -7,6 +7,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import make_column_transformer
 
+'''
+If-else conditions apply for training/inference preprocessing.
+'''
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--train-test-split-ratio', type=float, default=0.3)
@@ -21,7 +25,7 @@ if __name__ == '__main__':
     print('Reading input data from {}'.format(input_data_path))
     df = pd.read_csv(input_data_path)
 
-    if args.inference == 'false': # for training
+    if args.inference == 'false': # for training, train-test split
         split_ratio = args.train_test_split_ratio
         print('Splitting data into train and test sets with ratio {}'.format(split_ratio))
 
@@ -47,7 +51,7 @@ if __name__ == '__main__':
         df_train.to_csv(train_output_path, header=False, index=False)
         df_test.to_csv(test_output_path, header=False, index=False)
 
-    else:
+    else: # for single inference (batch transform)
         preprocess = make_column_transformer(
             (StandardScaler(), ['Age', 'Fare', 'Parch', 'SibSp', 'Family_Size']),
             (OneHotEncoder(sparse=False), ['Embarked', 'Pclass', 'Sex']))

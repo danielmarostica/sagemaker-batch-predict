@@ -43,17 +43,7 @@ if __name__ == '__main__':
 
 def model_fn(model_dir):
     '''
-    O nome desta função é especial e será reconhecido pelo SageMaker para inferências.
+    The name of this function has to be 'model_fn' and receive a 'model_dir' parameter, so it can be recognized by SageMaker for training and inference.
     '''
     model = joblib.load(os.path.join(model_dir, 'model.joblib'))
     return model
-
-# def input_fn(input_data, content_type):
-#     """
-#     Para inferência, aceitar somente csv.
-#     """
-#     if content_type == 'text/csv':
-#         df = pd.read_csv(StringIO(input_data), header=None)
-#         return df
-#     else:
-#         raise ValueError("{} not supported by this script.".format(content_type))

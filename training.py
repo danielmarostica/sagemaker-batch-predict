@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import os
 import sys
 sys.path.append('modules')
@@ -9,39 +11,39 @@ from sagemaker.sklearn.processing import SKLearnProcessor
 from sagemaker.sklearn.estimator import SKLearn
 from sagemaker.processing import ProcessingInput, ProcessingOutput
 
-# get role with sagemaker, s3, redshift permissions
+# get role with sagemaker, s3, permissions
 iam = boto3.client('iam')
 role = iam.get_role(RoleName='datascience-sagemaker-s3-redshift')['Role']['Arn']
 
-# start session
+# start session (you must have your credentials file at /home/your.name/.aws/ correctly set with CLI keys and tokens)
 sagemaker_session = sagemaker.Session()
 
 # bucket folder name (prefix)
 bucket = sagemaker_session.default_bucket() # creates a bucket based on your region and account ID
-prefix = "titanic_example"
+prefix = "titanic_example" # folder name
 
-# # upload csv to s3
-# s3_data_uri = upload(sagemaker_session, bucket, prefix, file_path='data/data.csv')
+# upload csv to s3
+s3_data_uri = upload(sagemaker_session, bucket, prefix, file_path='data/data.csv')
 
-# # preprocessing data
-# print('Starting preprocessing job')
-# sklearn_processor = SKLearnProcessor(framework_version='0.23-1',
-#                                     role=role,
-#                                     instance_type='ml.t3.medium',
-#                                     instance_count=1,
-#                                     base_job_name='sm-preprocessing')
+# preprocessing data
+print('Starting preprocessing job') # you can check its state at AWS's web interface under SageMaker > Processing Jobs
+sklearn_processor = SKLearnProcessor(framework_version='0.23-1',
+                                    role=role,
+                                    instance_type='ml.t3.medium',
+                                    instance_count=1,
+                                    base_job_name='sm-preprocessing')
 
-# sklearn_processor.run(code='modules/preprocessing.py',
-#                     inputs=[ProcessingInput(
-#                             source=s3_data_uri,
-#                             destination='/opt/ml/processing/input')],
-#                     outputs=[ProcessingOutput(output_name='train_data',
-#                                                 source='/opt/ml/processing/train'),
-#                             ProcessingOutput(output_name='test_data',
-#                                                 source='/opt/ml/processing/test')],
-#                     arguments=['--train-test-split-ratio', '0.2'])
+sklearn_processor.run(code='modules/preprocessing.py',
+                    inputs=[ProcessingInput(
+                            source=s3_data_uri,
+                            destination='/opt/ml/processing/input')],
+                    outputs=[ProcessingOutput(output_name='train_data',
+                                                source='/opt/ml/processing/train'),
+                            ProcessingOutput(output_name='test_data',
+                                                source='/opt/ml/processing/test')],
+                    arguments=['--train-test-split-ratio', '0.2'])
 
-# preprocessing_job_description = sklearn_processor.jobs[-1].describe() # save the name of the processing job
+preprocessing_job_description = sklearn_processor.jobs[-1].describe() # save the name of the processing job
 
 # training
 print('Starting training job')
@@ -54,11 +56,8 @@ sklearn = SKLearn(
     hyperparameters={"max_leaf_nodes": 30},
     base_job_name='sm-training')
 
-train_file = os.path.join('s3://', bucket, 'sm-preprocessing-2021-11-24-00-38-24-494', 'output', 'train_data', 'train.csv')
-test_file = os.path.join('s3://', bucket, 'sm-preprocessing-2021-11-24-00-38-24-494', 'output', 'test_data', 'test.csv')
-
-# train_file = os.path.join('s3://', bucket, preprocessing_job_description['ProcessingJobName'], 'output', 'train_data', 'train.csv')
-# test_file = os.path.join('s3://', bucket, preprocessing_job_description['ProcessingJobName'], 'output', 'test_data', 'test.csv')
+train_file = os.path.join('s3://', bucket, preprocessing_job_description['ProcessingJobName'], 'output', 'train_data', 'train.csv')
+test_file = os.path.join('s3://', bucket, preprocessing_job_description['ProcessingJobName'], 'output', 'test_data', 'test.csv')
 
 sklearn.fit({'train': train_file, 'test': test_file})
 

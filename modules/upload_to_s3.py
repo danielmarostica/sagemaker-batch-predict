@@ -9,8 +9,8 @@ def upload(sagemaker_session, bucket, prefix, file_path='data/data.csv'):
     raw_data = sagemaker_session.upload_data(
         path="{}".format(file_path),
         bucket=bucket,
-        key_prefix="{}".format(prefix)
-    )
+        key_prefix="{}".format(prefix))
+        
     print('Data has been stored in the following bucket:', bucket)
     
     return raw_data
