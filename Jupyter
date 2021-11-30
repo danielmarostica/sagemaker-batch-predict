@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-source ~/miniconda3/etc/profile.d/conda.sh
-conda activate colab
-jupyter-lab --NotebookApp.allow_origin='https://colab.research.google.com' --port=8888 --NotebookApp.port_retries=0 --NotebookApp.token='' --NotebookApp.password='' --no-browser  --NotebookApp.use_redirect_file=False --NotebookApp.iopub_data_rate_limit=1.0e10
